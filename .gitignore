@@ -1,0 +1,4 @@
+*.log
+*.jpg
+/imageAssets
+/__pycache__
