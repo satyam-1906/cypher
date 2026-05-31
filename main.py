@@ -14,6 +14,7 @@ import logger
 import json
 from pathlib import Path
 from PIL import Image
+import database
 
 class Machines(BaseModel):
     name: str = Field(description="Name of the machine.")
@@ -48,7 +49,7 @@ def undo():
 
 def on_click(x, y, button, pressed):
     global curr_box, boxes
-    if pressed and button == Button.left:
+    if not active_state and pressed and button == Button.left:
         if window_x > 0 and window_x < width and window_y > 0 and window_y < height:
             cv2.circle(canvas, (window_x, window_y), 2, (256, 256, 256), -1)
             curr_box.append([window_x, window_y])
@@ -131,6 +132,10 @@ curr_box = []
 
 active_state = False
 
+database.make_connection()
+t = threading.Timer(1.0, database.put_data)
+t.start()
+
 while True:
     ret, frame = cap.read()
     if not ret:
@@ -150,18 +155,20 @@ while True:
         height = bottom - top
     else:
         left, top, right, bottom, screen_x, screen_y, window_x, window_y = 0, 0, 0, 0, 0, 0, 0, 0
-        
-    frame = cv2.add(frame, canvas)
 
     if active_state:
-        cv2.circle(frame, (10, 10), 5, (0, 256, 0), -1)
+        cv2.circle(canvas, (10, 10), 5, (0, 256, 0), -1)
     else:
-        cv2.circle(frame, (10, 10), 5, (0, 0, 256), -1)
+        cv2.circle(canvas, (10, 10), 5, (0, 0, 256), -1)
+    cv2.putText(canvas, "INFERRENCING", (20, 14), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (256, 256, 256), 1)
+
+    frame = cv2.add(frame, canvas)
 
     cv2.imshow("Video Feed", frame)
         
     key = cv2.waitKey(1) & 0xFF
     if key == ord('q'):
+        database.stop_db_write()
         try:
             t.cancel()
         except Exception as e:

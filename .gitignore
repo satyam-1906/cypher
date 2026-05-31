@@ -2,3 +2,5 @@
 *.jpg
 /imageAssets
 /__pycache__
+line.txt
+.env
