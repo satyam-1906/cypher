@@ -28,3 +28,6 @@ def log_info(name, humans, machines, description):
 def log_error(message):
     app_logger.error(f'Error: {message}')
 
+def log_activation(message):
+    app_logger.info(f'Activation state: {message}')
+

@@ -107,11 +107,13 @@ def activate():
     if active_state:
         inferrence_timer = threading.Timer(1.0, inferrence)
         inferrence_timer.start()
+        logger.log_activation('Inferrencing ACTIVATED.')
     else:
         try:
             t.cancel()
         except Exception as e:
             pass
+        logger.log_activation('Inferrencing DEACTIVATED')
 
 
 listener = Listener(on_click=on_click)
