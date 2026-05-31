@@ -13,6 +13,18 @@ logging.basicConfig(
 app_logger = logging.getLogger('CCTVApp')
 app_logger.setLevel(logging.INFO)
 
+activation_logger = logging.getLogger('System_Logger')
+activation_logger.setLevel(logging.INFO)
+
+handler = logging.FileHandler('system.log')
+handler.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+activation_logger.addHandler(handler)
+activation_logger.propagate = False
+
 # Ensure app logger is written to the file and does not propagate to the root logger
 if not app_logger.handlers:
     handler = logging.FileHandler('app.log', mode='a', encoding='utf-8')
@@ -26,8 +38,8 @@ def log_info(name, humans, machines, description):
 
 
 def log_error(message):
-    app_logger.error(f'Error: {message}')
+    activation_logger.error(f'Error: {message}')
 
 def log_activation(message):
-    app_logger.info(f'Activation state: {message}')
+    activation_logger.info(f'Activation state: {message}')
 

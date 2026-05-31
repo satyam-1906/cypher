@@ -26,8 +26,7 @@ def put_data():
             if start_line > line_num:
                 continue
             arr = line.strip().split('-')
-            if 'MainThread' not in arr[4]:
-                arr.pop(4)
+            arr.pop(4)
             arr.pop(4)
             arr.pop(3)
             arr[0] = arr[0] + '-' + arr[1] + '-' + arr[2][:11]
@@ -44,7 +43,7 @@ def put_data():
             processed_array = [Json(d) for d in json_text]
             query = 'INSERT INTO logs (time_stamp, name, humans, machines, description) VALUES (%s, %s, %s, %s::jsonb[], %s)'
             try:
-                cursor.execute(query, (arr[0], arr[1], int(arr[2]), processed_array, arr[4],))
+                cursor.execute(query, (arr[0], arr[1], int(arr[2]), processed_array, arr[4]))
                 connection.commit()
             except Exception as e:
                 print(f"ERROR: {e}")
@@ -55,6 +54,9 @@ def put_data():
     t.start()
 
 def stop_db_write():
-    t.cancel()
+    try:
+        t.cancel()
+    except Exception as e:
+        pass
     cursor.close()
     connection.close()

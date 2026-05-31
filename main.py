@@ -35,7 +35,6 @@ def undo():
         mask = np.zeros(frame.shape[:2], dtype=np.uint8)
         cv2.circle(mask, (curr_box[0][0], curr_box[0][1]), 2, (256, 256, 256), -1)
         canvas = cv2.inpaint(canvas, mask, 3, cv2.INPAINT_TELEA)
-        print("executed")
         curr_box = []
     elif len(boxes) >= 1:
         last_box = boxes[len(boxes)-1]
@@ -44,7 +43,6 @@ def undo():
         cv2.circle(mask, (last_box[1][0], last_box[1][1]), 2, (256, 256, 256), -1)
         cv2.rectangle(mask, (last_box[0][0], last_box[0][1]), (last_box[1][0], last_box[1][1]), (256, 256, 256), 1)
         canvas = cv2.inpaint(canvas, mask, 3, cv2.INPAINT_TELEA)
-        print("executed")
         boxes.pop()
 
 def on_click(x, y, button, pressed):
@@ -64,7 +62,7 @@ def inferrence():
     folder_path = Path('imageAssets')
     folder_path.mkdir(parents=True, exist_ok=True)
     contents = []
-    if len(boxes) != 0:
+    if len(boxes) != 0 and active_state:
         # Remove old saved crops so only the current selection is inferred.
         for file_path in folder_path.iterdir():
             if file_path.is_file():
@@ -83,7 +81,7 @@ def inferrence():
             prompt = "Describe what you see in all of the live camera frames and respond according to the JSON schema provided."
             contents = [prompt] + contents
             response = client.models.generate_content(
-                model="gemini-3.5-flash",
+                model="gemini-2.5-flash",
                 contents=contents,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -99,7 +97,7 @@ def inferrence():
         print(f'ERROR : {e}')
         logger.log_error(f'{e}')
 
-    t = threading.Timer(5.0, inferrence)
+    t = threading.Timer(10.0, inferrence)
     t.start()
 
 def activate():
