@@ -13,6 +13,23 @@ from typing import List, Optional
 import logger
 import json
 
+def undo():
+    global boxes, curr_box, frame, canvas
+    if len(curr_box) == 1:
+        mask = np.zeros(frame.shape[:2], dtype=np.uint8)
+        cv2.circle(mask, (curr_box[0][0], curr_box[0][1]), 2, (256, 256, 256), -1)
+        canvas = cv2.inpaint(canvas, mask, 3, cv2.INPAINT_TELEA)
+        print("executed")
+        curr_box = []
+    elif len(boxes) >= 1:
+        last_box = boxes[len(boxes)-1]
+        mask = np.zeros(frame.shape[:2], dtype=np.uint8)
+        cv2.circle(mask, (last_box[0][0], last_box[0][1]), 2, (256, 256, 256), -1)
+        cv2.circle(mask, (last_box[1][0], last_box[1][1]), 2, (256, 256, 256), -1)
+        cv2.rectangle(mask, (last_box[0][0], last_box[0][1]), (last_box[1][0], last_box[1][1]), (256, 256, 256), 1)
+        canvas = cv2.inpaint(canvas, mask, 3, cv2.INPAINT_TELEA)
+        print("executed")
+        boxes.pop()
 
 def on_click(x, y, button, pressed):
     global curr_box, boxes
@@ -23,8 +40,6 @@ def on_click(x, y, button, pressed):
             if len(curr_box) == 2:
                 cv2.rectangle(canvas, (curr_box[0][0], curr_box[0][1]), (curr_box[1][0], curr_box[1][1]), (256, 256, 256), 1)
                 boxes.append(curr_box)
-                cropped_frame = frame[curr_box[0][1]:curr_box[1][1], curr_box[0][0]:curr_box[1][0]]
-                cv2.imwrite('imageAssets/output.jpg', cropped_frame)
                 curr_box = []
 
 listener = Listener(on_click=on_click)
@@ -72,3 +87,5 @@ while True:
     elif key == ord('c'):
         canvas = np.zeros_like(frame)
         boxes = []
+    elif key == ord('u'):
+        undo()
