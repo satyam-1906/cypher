@@ -2,6 +2,8 @@ import psycopg2
 from dotenv import load_dotenv
 import os
 import threading
+import json
+from psycopg2.extras import Json
 
 load_dotenv()
 
@@ -37,9 +39,12 @@ def put_data():
             arr[2] = arr[2][8:]
             arr[3] = arr[3][10:]
             arr[4] = arr[4][13:]
-            query = 'INSERT INTO logs (time_stamp, name, humans, machines, description) VALUES (%s, %s, %s, %s, %s)'
+            text = arr[3].replace('\'','"')
+            json_text = json.loads(text)
+            processed_array = [Json(d) for d in json_text]
+            query = 'INSERT INTO logs (time_stamp, name, humans, machines, description) VALUES (%s, %s, %s, %s::jsonb[], %s)'
             try:
-                cursor.execute(query, (arr[0], arr[1], arr[2], arr[3], arr[4],))
+                cursor.execute(query, (arr[0], arr[1], int(arr[2]), processed_array, arr[4],))
                 connection.commit()
             except Exception as e:
                 print(f"ERROR: {e}")
