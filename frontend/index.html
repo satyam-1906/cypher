@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CYPHER | Intelligent Surveillance Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="background-grid" aria-hidden="true">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <div class="container">
+    <header class="header">
+      <div class="brand">
+        <div class="brand-logo"><span>CY</span></div>
+        <div class="brand-title">
+          <h1>CYPHER</h1>
+          <p>AI-driven surveillance intelligence and log monitoring for industrial operations.</p>
+        </div>
+      </div>
+      <button id="refresh-button" class="button">Refresh Logs</button>
+    </header>
+
+    <section class="alert-banner">
+      <div>
+        <strong>Live data channel active.</strong>
+        <span class="alert-pill">Supabase `logs` table</span>
+      </div>
+      <div id="status-message"></div>
+    </section>
+
+    <div class="card-row">
+      <article class="stat-card">
+        <small>Total Records</small>
+        <h2 data-total-logs>0</h2>
+      </article>
+      <article class="stat-card">
+        <small>Human Count</small>
+        <h2 data-total-humans>0</h2>
+      </article>
+      <article class="stat-card">
+        <small>Last Update</small>
+        <h2 data-last-update>--</h2>
+      </article>
+    </div>
+
+    <div class="main-grid">
+      <section class="panel">
+        <h3>Recent CCTV Logs</h3>
+        <p class="panel-subtitle">The table below shows entries directly from the `logs` database table, with no extra fields added.</p>
+        <div style="position: relative;">
+          <div id="loading-overlay" class="loading-overlay" style="display: none;">
+            <div class="spinner" role="status" aria-label="Loading"></div>
+          </div>
+          <table class="log-table" aria-label="Recent log entries">
+            <thead>
+              <tr>
+                <th>Time Stamp</th>
+                <th>Name</th>
+                <th>Humans</th>
+                <th>Machines</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody id="log-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="panel panel-card">
+        <div>
+          <h3>Dashboard insights</h3>
+          <p class="panel-subtitle">A real-time analytics panel based on the same fields stored in the log table.</p>
+        </div>
+        <div class="small-stat">
+          <strong>Machine object count</strong>
+          <span>Each log entry includes a `machines` JSON array. Expand any row to inspect the exact structure.</span>
+        </div>
+        <div class="small-stat">
+          <strong>Schema-aligned rendering</strong>
+          <span>Displayed fields are `time_stamp`, `name`, `humans`, `machines`, and `description` only.</span>
+        </div>
+        <div class="small-stat">
+          <strong>Responsive & interactive</strong>
+          <span>Hover table rows and expand entries to review raw machine payloads.</span>
+        </div>
+      </aside>
+    </div>
+
+    <p class="footer-note">Designed for CYPHER: the AI industrial surveillance dashboard with transparent log rendering.</p>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
