@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CYPHER | Intelligent Surveillance Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/x-icon" href="brandAssets/favicon.png">
+  <script>
+    if (!localStorage.getItem('sb_jwt') || !localStorage.getItem('sb_log_table')) {
+      window.location.replace('index.html');
+    }
+  </script>
+</head>
+<body>
+  <!-- Particle Animation Background -->
+  <div class="particle-container" id="particle-container" aria-hidden="true"></div>
+  
+  <!-- Cypher Text Animation -->
+  <div class="cypher-text" aria-hidden="true">
+    <div class="cypher-rings">
+      <div class="ring ring-1"></div>
+      <div class="ring ring-2"></div>
+      <div class="ring ring-3"></div>
+    </div>
+    <div class="cypher-text-content">
+      <span class="cypher-word hindi">सायफर</span>
+      <span class="cypher-word english">CYPHER</span>
+    </div>
+  </div>
+
+  <div class="background-grid" aria-hidden="true">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <div class="container">
+    <header class="header">
+      <div class="brand">
+        <div class="brand-logo"><span>CY</span></div>
+        <div class="brand-title">
+          <h1>CYPHER</h1>
+          <p>AI-driven surveillance intelligence and log monitoring for industrial operations.</p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <button id="refresh-button" class="button">Refresh Logs</button>
+        <button id="logout-button" class="button" style="background: linear-gradient(135deg, var(--danger) 0%, #ff6b8b 100%);">Logout</button>
+      </div>
+    </header>
+
+    <section class="alert-banner">
+      <div>
+        <strong>Live data channel active.</strong>
+        <span class="alert-pill" id="active-table-pill">Supabase `logs` table</span>
+      </div>
+      <div id="status-message"></div>
+    </section>
+
+    <!-- Search and Filter Panel -->
+    <div class="search-filter-panel">
+      <div class="search-container">
+        <svg class="search-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input 
+          type="text" 
+          id="search-input" 
+          class="search-input" 
+          placeholder="Search by machine name, description, or timestamp..."
+          aria-label="Search logs"
+        />
+        <button id="clear-search-btn" class="clear-btn" aria-label="Clear search" title="Clear search">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="filter-toggle">
+        <button id="filter-toggle-btn" class="filter-button" aria-label="Toggle filters" aria-expanded="false">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"></path>
+          </svg>
+          <span>Filters</span>
+          <span class="filter-count" id="filter-count" style="display: none;">1</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Collapsible Filter Panel -->
+    <div class="filter-panel" id="filter-panel">
+      <div class="filter-content">
+        <!-- Humans Filter -->
+        <div class="filter-group">
+          <label class="filter-label">
+            <span class="filter-label-text">Humans</span>
+            <span class="filter-value" id="humans-value">Any</span>
+          </label>
+          <input 
+            type="range" 
+            id="humans-filter" 
+            class="filter-slider" 
+            min="0" 
+            max="100" 
+            value="0"
+            aria-label="Filter by human count"
+          />
+          <div class="filter-range-display">
+            <span id="humans-min">0</span>
+            <span>—</span>
+            <span id="humans-max">100+</span>
+          </div>
+        </div>
+
+        <!-- Machines Filter -->
+        <div class="filter-group">
+          <label class="filter-label">
+            <span class="filter-label-text">Machines</span>
+            <span class="filter-value" id="machines-value">Any</span>
+          </label>
+          <input 
+            type="range" 
+            id="machines-filter" 
+            class="filter-slider" 
+            min="0" 
+            max="20" 
+            value="0"
+            aria-label="Filter by machine count"
+          />
+          <div class="filter-range-display">
+            <span id="machines-min">0</span>
+            <span>—</span>
+            <span id="machines-max">20+</span>
+          </div>
+        </div>
+
+        <!-- Date Range Filter -->
+        <div class="filter-group">
+          <label class="filter-label filter-label-text">Date Range</label>
+          <div class="filter-date-inputs">
+            <input 
+              type="date" 
+              id="date-from-filter" 
+              class="filter-date-input"
+              aria-label="From date"
+            />
+            <span class="date-separator">to</span>
+            <input 
+              type="date" 
+              id="date-to-filter" 
+              class="filter-date-input"
+              aria-label="To date"
+            />
+          </div>
+        </div>
+
+        <!-- Name Filter -->
+        <div class="filter-group">
+          <label class="filter-label filter-label-text">Machine Name</label>
+          <input 
+            type="text" 
+            id="name-filter" 
+            class="filter-input"
+            placeholder="Filter by name..."
+            aria-label="Filter by machine name"
+          />
+        </div>
+
+        <!-- Reset Button -->
+        <button id="reset-filters-btn" class="reset-filters-btn">Reset All Filters</button>
+      </div>
+    </div>
+
+    <div class="card-row">
+      <article class="stat-card">
+        <small>Total Records</small>
+        <h2 data-total-logs>0</h2>
+      </article>
+      <article class="stat-card">
+        <small>Human Count</small>
+        <h2 data-total-humans>0</h2>
+      </article>
+      <article class="stat-card">
+        <small>Last Update</small>
+        <h2 data-last-update>--</h2>
+      </article>
+    </div>
+
+    <div class="main-grid">
+      <section class="panel">
+        <h3>Recent CCTV Logs</h3>
+        <p class="panel-subtitle">The table below shows entries directly from the `logs` database table, with no extra fields added.</p>
+        <div style="position: relative;">
+          <div id="loading-overlay" class="loading-overlay" style="display: none;">
+            <div class="spinner" role="status" aria-label="Loading"></div>
+          </div>
+          <table class="log-table" aria-label="Recent log entries">
+            <thead>
+              <tr>
+                <th>Time Stamp</th>
+                <th>Name</th>
+                <th>Humans</th>
+                <th>Machines</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody id="log-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="panel panel-card">
+        <div>
+          <h3>Dashboard insights</h3>
+          <p class="panel-subtitle">A real-time analytics panel based on the same fields stored in the log table.</p>
+        </div>
+        <div class="small-stat">
+          <strong>Machine object count</strong>
+          <span>Each log entry includes a `machines` JSON array. Expand any row to inspect the exact structure.</span>
+        </div>
+        <div class="small-stat">
+          <strong>Schema-aligned rendering</strong>
+          <span>Displayed fields are `time_stamp`, `name`, `humans`, `machines`, and `description` only.</span>
+        </div>
+        <div class="small-stat">
+          <strong>Responsive & interactive</strong>
+          <span>Hover table rows and expand entries to review raw machine payloads.</span>
+        </div>
+      </aside>
+    </div>
+
+    <p class="footer-note">Designed for CYPHER: the AI industrial surveillance dashboard with transparent log rendering.</p>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

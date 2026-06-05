@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2 import sql
 from dotenv import load_dotenv
 import os
 import threading
@@ -16,9 +17,23 @@ def make_connection():
     except Exception as e:
         print(f"ERROR: {e}")
 
+def retrieve_table_name(email_id:str=None, pwd:str=None):
+    if email_id == None and pwd == None:
+        print("ERROR: Invalid credentials")
+        return
+    query = sql.SQL("SELECT log_table FROM users WHERE email_id = %s AND password = %s")
+    try:
+        cursor.execute(query, (email_id, pwd))
+        connection.commit()
+        table_log = cursor.fetchone()[0]
+        with open('tableName.txt', 'w') as file:
+            file.write(table_log)
+    except Exception as e:
+        print(f"ERROR: {e}")
 
 def put_data():
     global t
+    line_num = 0
     with open("app.log", 'r') as file:
         with open("line.txt", 'r') as line:
             start_line = int(line.readlines()[0])
@@ -41,14 +56,19 @@ def put_data():
             text = arr[3].replace('\'','"')
             json_text = json.loads(text)
             processed_array = [Json(d) for d in json_text]
-            query = 'INSERT INTO logs (time_stamp, name, humans, machines, description) VALUES (%s, %s, %s, %s::jsonb[], %s)'
+            
+            # Read dynamic table name from environmental configuration
+            with open('tableName.txt', 'r') as file:
+                log_table = file.readlines()[0].strip()
+            query = sql.SQL('INSERT INTO {} (time_stamp, name, humans, machines, description) VALUES (%s, %s, %s, %s::jsonb[], %s)').format(sql.Identifier(log_table))
             try:
                 cursor.execute(query, (arr[0], arr[1], int(arr[2]), processed_array, arr[4]))
                 connection.commit()
             except Exception as e:
                 print(f"ERROR: {e}")
         with open("line.txt", 'w') as line:
-            line.write(f'{line_num+1}')
+            if line_num != 0:
+                line.write(f'{line_num+1}')
     
     t = threading.Timer(10.0, put_data)
     t.start()

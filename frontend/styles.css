@@ -1078,3 +1078,405 @@ body .background-grid span:nth-child(5) { top: 78%; left: 64%; animation-duratio
     font-size: 0.85rem;
   }
 }
+
+/* ==========================================================================
+   CYPHER LANDING PAGE & AUTH STYLES
+   ========================================================================== */
+
+/* Hero Section */
+.hero {
+  text-align: center;
+  padding: 60px 20px 40px;
+  position: relative;
+  z-index: 2;
+}
+
+.hero h2 {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 0 0 15px;
+  background: linear-gradient(135deg, #2be6ff 0%, #a3adc5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(43, 230, 255, 0.15);
+}
+
+/* Dynamic rotating text container */
+.rotating-text-wrapper {
+  height: 40px;
+  overflow: hidden;
+  margin-bottom: 30px;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--accent-2);
+  letter-spacing: 0.05em;
+}
+
+.rotating-text {
+  animation: rotateWords 12s cubic-bezier(0.68, -0.6, 0.32, 1.6) infinite;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  line-height: 40px;
+}
+
+@keyframes rotateWords {
+  0%, 20% { transform: translateY(0); }
+  25%, 45% { transform: translateY(-40px); }
+  50%, 70% { transform: translateY(-80px); }
+  75%, 95% { transform: translateY(-120px); }
+  100% { transform: translateY(0); }
+}
+
+/* Bento Box Layout */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin: 40px auto;
+  max-width: 1300px;
+  z-index: 2;
+  position: relative;
+}
+
+.bento-card {
+  background: rgba(9, 15, 31, 0.35);
+  border: 1px solid rgba(76, 161, 229, 0.15);
+  border-radius: 28px;
+  padding: 30px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(var(--glassmorphism-blur));
+  -webkit-backdrop-filter: blur(var(--glassmorphism-blur));
+  transition: all var(--transition-smooth);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  min-height: 260px;
+}
+
+.bento-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(43, 230, 255, 0.35);
+  background: rgba(43, 230, 255, 0.06);
+}
+
+/* Bento Card Spans */
+.span-2-col {
+  grid-column: span 2 / span 2;
+}
+
+.span-2-row {
+  grid-row: span 2 / span 2;
+  min-height: 544px;
+}
+
+.bento-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 12px;
+  letter-spacing: 0.05em;
+}
+
+.bento-desc {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0 0 20px;
+}
+
+/* Visual Content Container */
+.bento-media {
+  flex: 1;
+  border-radius: 18px;
+  background: rgba(76, 161, 229, 0.06);
+  border: 1px solid rgba(76, 161, 229, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+  min-height: 180px;
+}
+
+.bento-media img, .bento-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.bento-card:hover .bento-media img {
+  transform: scale(1.04);
+}
+
+.bento-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(76, 161, 229, 0.1) 0%, rgba(9, 15, 31, 0.7) 100%);
+  color: var(--accent);
+  padding: 20px;
+  text-align: center;
+  backdrop-filter: blur(2px);
+}
+
+.bento-placeholder svg {
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 8px rgba(43, 230, 255, 0.5));
+}
+
+.bento-placeholder span {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+}
+
+/* Small Feature Badges */
+.badge-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.badge-item {
+  background: rgba(43, 230, 255, 0.08);
+  border: 1px solid rgba(43, 230, 255, 0.18);
+  color: var(--accent);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Code block style */
+.bento-code {
+  font-family: monospace;
+  background: rgba(5, 8, 15, 0.7);
+  border: 1px solid rgba(76, 161, 229, 0.15);
+  border-radius: 14px;
+  padding: 15px;
+  font-size: 0.8rem;
+  color: #92d8ff;
+  overflow-x: auto;
+  margin: 0;
+  text-align: left;
+}
+
+/* Auth Card Styles */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 120px);
+  padding: 20px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 450px;
+  background: rgba(9, 15, 31, 0.45);
+  border: 1px solid rgba(76, 161, 229, 0.2);
+  border-radius: 28px;
+  padding: 40px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(var(--glassmorphism-blur));
+  -webkit-backdrop-filter: blur(var(--glassmorphism-blur));
+  transition: all var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+.auth-title {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.auth-title h2 {
+  font-size: 2rem;
+  letter-spacing: 0.1em;
+  margin: 0 0 10px 0;
+  color: var(--text);
+}
+
+.auth-title p {
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin: 0;
+}
+
+/* Toggle switch for Sign In / Sign Up */
+.auth-toggle {
+  display: flex;
+  background: rgba(76, 161, 229, 0.08);
+  border: 1px solid rgba(76, 161, 229, 0.15);
+  border-radius: 14px;
+  padding: 4px;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.auth-toggle-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Oxanium', sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.auth-toggle-btn.active {
+  color: #04131e;
+  background: var(--accent);
+  box-shadow: 0 0 15px rgba(43, 230, 255, 0.3);
+}
+
+/* Input Fields */
+.form-group {
+  margin-bottom: 22px;
+  position: relative;
+}
+
+.form-label {
+  display: block;
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.form-input-wrapper {
+  position: relative;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(76, 161, 229, 0.06);
+  border: 1px solid rgba(76, 161, 229, 0.2);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: 'Oxanium', sans-serif;
+  font-size: 0.95rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: rgba(43, 230, 255, 0.08);
+  box-shadow: 0 0 15px rgba(43, 230, 255, 0.15);
+}
+
+.form-submit-btn {
+  width: 100%;
+  margin-top: 15px;
+  padding: 15px;
+}
+
+/* Animation for registration fields */
+.reg-only-field {
+  max-height: 100px;
+  opacity: 1;
+  margin-bottom: 22px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.reg-only-field.hidden {
+  max-height: 0;
+  opacity: 0;
+  margin-bottom: 0;
+  pointer-events: none;
+}
+
+/* Error / Success feedback */
+.auth-message {
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 22px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  display: none;
+}
+
+.auth-message.error {
+  display: block;
+  background: rgba(255, 77, 109, 0.12);
+  border: 1px solid rgba(255, 77, 109, 0.25);
+  color: #ffccd6;
+}
+
+.auth-message.success {
+  display: block;
+  background: rgba(79, 255, 158, 0.12);
+  border: 1px solid rgba(79, 255, 158, 0.25);
+  color: #ccffd6;
+}
+
+.back-to-home {
+  display: block;
+  text-align: center;
+  margin-top: 25px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.88rem;
+  transition: color 0.2s ease;
+}
+
+.back-to-home:hover {
+  color: var(--accent);
+}
+
+.back-to-home svg {
+  vertical-align: middle;
+  margin-right: 6px;
+  margin-top: -2px;
+}
+
+/* Responsive bento layouts */
+@media (max-width: 992px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .span-2-col {
+    grid-column: span 2 / span 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+  }
+  .span-2-col, .span-2-row {
+    grid-column: span 1 / span 1;
+    grid-row: span 1 / span 1;
+    min-height: auto;
+  }
+}
+

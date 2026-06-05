@@ -156,8 +156,24 @@ async function fetchLogs() {
   showLoading(true);
   clearStatus();
 
+  const token = localStorage.getItem('sb_jwt');
+  const logTable = localStorage.getItem('sb_log_table');
+
+  const tablePill = document.getElementById('active-table-pill');
+  if (tablePill && logTable) {
+    tablePill.textContent = `Table: ${logTable}`;
+  }
+
+  if (!token || !logTable) {
+    setStatus('Authentication credentials missing. Redirecting...');
+    setTimeout(() => {
+      window.location.replace('index.html');
+    }, 1500);
+    return;
+  }
+
   try {
-    const url = new URL(`${SUPABASE_URL}/rest/v1/logs`);
+    const url = new URL(`${SUPABASE_URL}/rest/v1/${logTable}`);
     url.searchParams.set('select', 'time_stamp,name,humans,machines,description');
     url.searchParams.set('order', 'time_stamp.desc');
     url.searchParams.set('limit', '100');
@@ -165,7 +181,7 @@ async function fetchLogs() {
     const response = await fetch(url.toString(), {
       headers: {
         'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });
@@ -182,9 +198,9 @@ async function fetchLogs() {
     updateStats(allLogs);
 
     if (!Array.isArray(data) || data.length === 0) {
-      setStatus('Fetched 0 rows. Confirm Supabase table policies allow anon select access for `logs`.');
+      setStatus(`Fetched 0 rows. Confirm your telemetry edge is writing to table: ${logTable}`);
     } else {
-      setStatus(`Fetched ${data.length} rows from logs.`);
+      setStatus(`Fetched ${data.length} rows from telemetry.`);
     }
   } catch (error) {
     console.error('Fetch error:', error);
@@ -471,6 +487,16 @@ function wireEvents() {
 
     applyFiltersAndRender();
   });
+
+  // Logout functionality
+  const logoutBtn = document.getElementById('logout-button');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('sb_jwt');
+      localStorage.removeItem('sb_log_table');
+      window.location.replace('index.html');
+    });
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {

@@ -90,7 +90,6 @@ def inferrence():
                 )
             )
             json_res = json.loads(response.text)
-            print("Gemini Response:", json_res)
             for report in json_res['reports']:
                 logger.log_info(report['name'], report['humans'], report['machines'], report['description'])
     except Exception as e:
@@ -115,6 +114,11 @@ def activate():
         logger.log_activation('Inferrencing DEACTIVATED')
 
 
+email_id = input("Registered Email-ID: ")
+pwd = input("Password: ")
+database.make_connection()
+database.retrieve_table_name(email_id, pwd)
+
 listener = Listener(on_click=on_click)
 listener.start()
 
@@ -130,7 +134,6 @@ curr_box = []
 
 active_state = False
 
-database.make_connection()
 t = threading.Timer(1.0, database.put_data)
 t.start()
 

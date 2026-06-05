@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CYPHER | Authentication Gateway</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/x-icon" href="brandAssets/favicon.png" />
+  <style>
+    /* Specific auth styles that aren't in styles.css yet */
+    .auth-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - 120px);
+      padding: 20px;
+    }
+    
+    .auth-card {
+      width: 100%;
+      max-width: 450px;
+      background: rgba(9, 15, 31, 0.45);
+      border: 1px solid rgba(76, 161, 229, 0.2);
+      border-radius: 28px;
+      padding: 40px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(var(--glassmorphism-blur));
+      -webkit-backdrop-filter: blur(var(--glassmorphism-blur));
+      transition: all var(--transition-smooth);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .auth-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+    
+    .auth-title {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .auth-title h2 {
+      font-size: 2rem;
+      letter-spacing: 0.1em;
+      margin: 0 0 10px 0;
+      color: var(--text);
+    }
+    
+    .auth-title p {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin: 0;
+    }
+    
+    /* Toggle switch for Sign In / Sign Up */
+    .auth-toggle {
+      display: flex;
+      background: rgba(76, 161, 229, 0.08);
+      border: 1px solid rgba(76, 161, 229, 0.15);
+      border-radius: 14px;
+      padding: 4px;
+      margin-bottom: 30px;
+      position: relative;
+    }
+    
+    .auth-toggle-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Oxanium', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 12px;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      z-index: 1;
+    }
+    
+    .auth-toggle-btn.active {
+      color: #04131e;
+      background: var(--accent);
+      box-shadow: 0 0 15px rgba(43, 230, 255, 0.3);
+    }
+    
+    /* Input Fields */
+    .form-group {
+      margin-bottom: 22px;
+      position: relative;
+    }
+    
+    .form-label {
+      display: block;
+      color: var(--accent);
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    
+    .form-input-wrapper {
+      position: relative;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(76, 161, 229, 0.06);
+      border: 1px solid rgba(76, 161, 229, 0.2);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'Oxanium', sans-serif;
+      font-size: 0.95rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: rgba(43, 230, 255, 0.08);
+      box-shadow: 0 0 15px rgba(43, 230, 255, 0.15);
+    }
+    
+    .form-submit-btn {
+      width: 100%;
+      margin-top: 15px;
+      padding: 15px;
+    }
+    
+    /* Animation for registration fields */
+    .reg-only-field {
+      max-height: 100px;
+      opacity: 1;
+      margin-bottom: 22px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+    
+    .reg-only-field.hidden {
+      max-height: 0;
+      opacity: 0;
+      margin-bottom: 0;
+      pointer-events: none;
+    }
+    
+    /* Error / Success feedback */
+    .auth-message {
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 22px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      display: none;
+    }
+    
+    .auth-message.error {
+      display: block;
+      background: rgba(255, 77, 109, 0.12);
+      border: 1px solid rgba(255, 77, 109, 0.25);
+      color: #ffccd6;
+    }
+    
+    .auth-message.success {
+      display: block;
+      background: rgba(79, 255, 158, 0.12);
+      border: 1px solid rgba(79, 255, 158, 0.25);
+      color: #ccffd6;
+    }
+    
+    .back-to-home {
+      display: block;
+      text-align: center;
+      margin-top: 25px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      transition: color 0.2s ease;
+    }
+    
+    .back-to-home:hover {
+      color: var(--accent);
+    }
+    
+    .back-to-home svg {
+      vertical-align: middle;
+      margin-right: 6px;
+      margin-top: -2px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Particle Animation Background -->
+  <div class="particle-container" id="particle-container" aria-hidden="true"></div>
+  
+  <!-- Floating background grid -->
+  <div class="background-grid" aria-hidden="true">
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand" style="cursor: pointer;" onclick="window.location.href='index.html'">
+        <div class="brand-logo"><span>CY</span></div>
+        <div class="brand-title">
+          <h1>CYPHER</h1>
+          <p>AI-driven surveillance intelligence and log monitoring.</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Auth Card -->
+    <div class="auth-container">
+      <main class="auth-card">
+        <div class="auth-title">
+          <h2 id="auth-header-title">Sign In</h2>
+          <p id="auth-subtitle">Access your surveillance command dashboard</p>
+        </div>
+
+        <!-- Segmented Toggle Control -->
+        <nav class="auth-toggle" aria-label="Authentication Mode">
+          <button type="button" id="toggle-signin" class="auth-toggle-btn active" aria-selected="true">Sign In</button>
+          <button type="button" id="toggle-signup" class="auth-toggle-btn" aria-selected="false">Sign Up</button>
+        </nav>
+
+        <!-- Status Message Banner -->
+        <div id="auth-status-message" class="auth-message" role="alert"></div>
+
+        <!-- Form -->
+        <form id="auth-form">
+          <!-- Full Name (Only for Register) -->
+          <div id="field-fullname" class="reg-only-field hidden">
+            <div class="form-group">
+              <label for="reg-fullname" class="form-label">Full Name</label>
+              <div class="form-input-wrapper">
+                <input 
+                  type="text" 
+                  id="reg-fullname" 
+                  class="form-input" 
+                  placeholder="Enter your full name" 
+                  autocomplete="name"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Email Address -->
+          <div class="form-group">
+            <label for="auth-email" class="form-label">Email Address</label>
+            <div class="form-input-wrapper">
+              <input 
+                type="email" 
+                id="auth-email" 
+                class="form-input" 
+                placeholder="name@company.com" 
+                required 
+                autocomplete="email"
+              />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="form-group">
+            <label for="auth-password" class="form-label">Password</label>
+            <div class="form-input-wrapper">
+              <input 
+                type="password" 
+                id="auth-password" 
+                class="form-input" 
+                placeholder="••••••••••••" 
+                required 
+                autocomplete="current-password"
+              />
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="auth-submit-btn" class="button form-submit-btn">
+            Sign In
+          </button>
+        </form>
+
+        <a href="index.html" class="back-to-home">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Back to Homepage
+        </a>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Supabase credentials (synchronized with app.js)
+    const SUPABASE_URL = 'https://rhfmgkhkarbwlqmutrle.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_4KcrZXeKIIMWHrHxj2_RHg_es2sYhsf';
+
+    // Particle background animation system
+    class ParticleSystem {
+      constructor(containerId) {
+        this.container = document.getElementById(containerId);
+        if (!this.container) return;
+        this.styleElement = document.createElement('style');
+        document.head.appendChild(this.styleElement);
+        this.particles = [];
+        this.maxParticles = 50;
+        this.animationDurations = [];
+        this.init();
+      }
+
+      init() {
+        let keyframes = '';
+        for (let i = 0; i < this.maxParticles; i++) {
+          const duration = 12 + (i * 0.5) + Math.random() * 6;
+          const delay = -(Math.random() * duration);
+          const xOffset = (Math.random() - 0.5) * 400;
+          const yOffset = -250 - Math.random() * 350;
+          this.animationDurations.push(duration);
+          keyframes += `
+            @keyframes auth-particle-${i} {
+              0% { transform: translate(0, 0) scale(1); opacity: 0; }
+              2% { opacity: 0.6; }
+              98% { opacity: 0.15; }
+              100% { transform: translate(${xOffset}px, ${yOffset}px) scale(0.2); opacity: 0; }
+            }
+          `;
+          this.createParticle(i, duration, delay);
+        }
+        this.styleElement.textContent = keyframes;
+      }
+
+      createParticle(index, duration, delay) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        const x = Math.random() * window.innerWidth;
+        const y = Math.random() * window.innerHeight;
+        const size = Math.random() * 6 + 2;
+        particle.style.left = x + 'px';
+        particle.style.top = y + 'px';
+        particle.style.width = size + 'px';
+        particle.style.height = size + 'px';
+        particle.style.animation = `auth-particle-${index} ${duration}s linear ${delay}s infinite`;
+        this.container.appendChild(particle);
+        this.particles.push(particle);
+      }
+    }
+
+    // Initialize particle system
+    window.addEventListener('DOMContentLoaded', () => {
+      new ParticleSystem('particle-container');
+    });
+
+    // UI state toggling
+    let mode = 'signin'; // 'signin' or 'signup'
+    const toggleSignInBtn = document.getElementById('toggle-signin');
+    const toggleSignUpBtn = document.getElementById('toggle-signup');
+    const fieldFullName = document.getElementById('field-fullname');
+    const inputFullName = document.getElementById('reg-fullname');
+    const authHeaderTitle = document.getElementById('auth-header-title');
+    const authSubtitle = document.getElementById('auth-subtitle');
+    const authSubmitBtn = document.getElementById('auth-submit-btn');
+    const authForm = document.getElementById('auth-form');
+    const authStatusMsg = document.getElementById('auth-status-message');
+
+    function switchMode(newMode) {
+      mode = newMode;
+      authStatusMsg.style.display = 'none';
+      if (mode === 'signup') {
+        toggleSignUpBtn.classList.add('active');
+        toggleSignUpBtn.setAttribute('aria-selected', 'true');
+        toggleSignInBtn.classList.remove('active');
+        toggleSignInBtn.setAttribute('aria-selected', 'false');
+        fieldFullName.classList.remove('hidden');
+        inputFullName.setAttribute('required', 'required');
+        authHeaderTitle.textContent = 'Create Account';
+        authSubtitle.textContent = 'Register for a new CCTV surveillance profile';
+        authSubmitBtn.textContent = 'Register';
+        document.getElementById('auth-password').setAttribute('autocomplete', 'new-password');
+      } else {
+        toggleSignInBtn.classList.add('active');
+        toggleSignInBtn.setAttribute('aria-selected', 'true');
+        toggleSignUpBtn.classList.remove('active');
+        toggleSignUpBtn.setAttribute('aria-selected', 'false');
+        fieldFullName.classList.add('hidden');
+        inputFullName.removeAttribute('required');
+        authHeaderTitle.textContent = 'Sign In';
+        authSubtitle.textContent = 'Access your surveillance command dashboard';
+        authSubmitBtn.textContent = 'Sign In';
+        document.getElementById('auth-password').setAttribute('autocomplete', 'current-password');
+      }
+    }
+
+    toggleSignInBtn.addEventListener('click', () => switchMode('signin'));
+    toggleSignUpBtn.addEventListener('click', () => switchMode('signup'));
+
+    // Handle form submission
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      authStatusMsg.style.display = 'none';
+      authSubmitBtn.disabled = true;
+      authSubmitBtn.textContent = mode === 'signup' ? 'Registering...' : 'Signing In...';
+
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const fullName = inputFullName.value.trim();
+
+      try {
+        if (mode === 'signup') {
+          // 1. Register with Supabase GoTrue Auth
+          const signUpResponse = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              email: email,
+              password: password,
+              data: {
+                full_name: fullName
+              }
+            })
+          });
+
+          const signUpData = await signUpResponse.json();
+          if (!signUpResponse.ok) {
+            throw new Error(signUpData.msg || signUpData.message || 'Authentication signup failed.');
+          }
+
+          // Note: Standard Supabase configuration might require email verification, but we write the user record immediately
+          // 2. Insert user record into public.users using REST API.
+          // The log_table column automatically generates a random UUID in the database.
+          const insertResponse = await fetch(`${SUPABASE_URL}/rest/v1/users`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({
+              full_name: fullName,
+              email_id: email,
+              password: password // Keep user password column synchronized
+            })
+          });
+
+          const insertedRows = await insertResponse.json();
+          if (!insertResponse.ok) {
+            throw new Error(insertedRows.msg || insertedRows.message || 'Failed to create user record in profile database.');
+          }
+
+          const newUserRecord = insertedRows[0];
+          const logTableUuid = newUserRecord.log_table;
+
+          // 3. Create the dynamic table for the user using RPC
+          const rpcResponse = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_log_table`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              table_name: logTableUuid
+            })
+          });
+
+          if (!rpcResponse.ok) {
+            const rpcError = await rpcResponse.json();
+            throw new Error(rpcError.message || 'Unable to instantiate your private database logging table.');
+          }
+
+          // If signup automatically logged the user in (we got session token)
+          if (signUpData.access_token) {
+            localStorage.setItem('sb_jwt', signUpData.access_token);
+            localStorage.setItem('sb_log_table', logTableUuid);
+            
+            authStatusMsg.className = 'auth-message success';
+            authStatusMsg.textContent = 'Account created successfully! Launching surveillance dashboard...';
+            setTimeout(() => {
+              window.location.href = 'dashboard.html';
+            }, 1500);
+          } else {
+            // Email confirmation required or successful signup without automatic signin
+            authStatusMsg.className = 'auth-message success';
+            authStatusMsg.textContent = 'Registration successful! Please sign in using your credentials.';
+            switchMode('signin');
+          }
+        } else {
+          // Handle Login Flow
+          // 1. Authenticate with Supabase Auth
+          const loginResponse = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              email: email,
+              password: password
+            })
+          });
+
+          const loginData = await loginResponse.json();
+          if (!loginResponse.ok) {
+            throw new Error(loginData.error_description || loginData.msg || loginData.message || 'Invalid email or password.');
+          }
+
+          const jwtToken = loginData.access_token;
+
+          // 2. Fetch the user's log_table from public.users table using their email
+          const userFetchResponse = await fetch(`${SUPABASE_URL}/rest/v1/users?email_id=eq.${encodeURIComponent(email)}`, {
+            method: 'GET',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${jwtToken}`
+            }
+          });
+
+          const userData = await userFetchResponse.json();
+          if (!userFetchResponse.ok || !userData || userData.length === 0) {
+            throw new Error('Associated profile not found in database. Contact administrator.');
+          }
+
+          const logTableUuid = userData[0].log_table;
+
+          // Save to localStorage
+          localStorage.setItem('sb_jwt', jwtToken);
+          localStorage.setItem('sb_log_table', logTableUuid);
+
+          authStatusMsg.className = 'auth-message success';
+          authStatusMsg.textContent = 'Authentication verified. Accessing dashboard...';
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 1000);
+        }
+      } catch (error) {
+        console.error('Authentication error:', error);
+        authStatusMsg.className = 'auth-message error';
+        authStatusMsg.textContent = error.message || 'An error occurred during authentication. Please check network connections.';
+      } finally {
+        authSubmitBtn.disabled = false;
+        authSubmitBtn.textContent = mode === 'signup' ? 'Register' : 'Sign In';
+      }
+    });
+  </script>
+</body>
+</html>
