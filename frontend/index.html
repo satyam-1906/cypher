@@ -104,7 +104,7 @@
       font-size: 1.4rem;
       font-weight: 600;
       color: var(--text);
-      margin: 0 0 12px;
+      margin: 12px 0 12px;
       letter-spacing: 0.05em;
     }
 
@@ -170,18 +170,18 @@
     .badge-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 15px;
+      gap: 8px;
+      margin-top: 8px;
     }
 
     .badge-item {
       background: rgba(43, 230, 255, 0.08);
       border: 1px solid rgba(43, 230, 255, 0.18);
       color: var(--accent);
-      padding: 6px 12px;
+      padding: 5px 11px;
       border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 500;
+      font-size: 0.75rem;
+      font-weight: 600;
     }
 
     /* Code block style */
@@ -292,10 +292,7 @@
         </div>
         <div class="bento-media">
           <!-- Checks for brand assets, shows placeholder if empty -->
-          <video autoplay loop muted playsinline poster="brandAssets/colorPallete.png" aria-label="CCTV monitoring demo video">
-            <source src="brandAssets/cctv_demo.mp4" type="video/mp4">
-            <img src="brandAssets/cctv_screenshot.jpg" alt="Live Surveillance Interface Screenshot">
-          </video>
+          <iframe width="100%" height="100%" src="https://www.youtube.com/embed/WoDlelIyq-I?si=CSKX9RzJNv8_EDhU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
           <div class="bento-placeholder" id="demo-media-placeholder">
             <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
               <rect x="2" y="2" width="20" height="20" rx="4"></rect>
@@ -358,8 +355,9 @@
             The dashboard displays real-time reports straight from your dynamic database table. Filters support range querying on human density, active machine components, and instant clear/refresh commands.
           </p>
         </div>
-        <div class="bento-media" style="min-height: 120px; max-height: 150px;">
-          <img src="brandAssets/dashboard_preview.png" alt="Dashboard Control Panel Mockup">
+        <div class="bento-media" style="min-height: 120px; max-height: 150px; position: relative;">
+          <img id="dashboard-preview-img" src="brandAssets/dashboard_preview.png" alt="Dashboard Control Panel Mockup"
+               style="cursor: zoom-in;" title="Click to expand">
           <div class="bento-placeholder" id="dashboard-media-placeholder">
             <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="20" x2="18" y2="10"></line>
@@ -395,6 +393,38 @@
     <p class="footer-note" style="text-align: center; margin-top: 40px;">
       CYPHER © 2026. Industrial edge AI logging systems and structured analytical monitoring.
     </p>
+  </div>
+
+  <!-- Lightbox Modal -->
+  <div id="img-lightbox" role="dialog" aria-modal="true" aria-label="Dashboard image expanded view"
+       style="
+         display: none;
+         position: fixed; inset: 0; z-index: 9999;
+         background: rgba(0,0,0,0.82);
+         backdrop-filter: blur(12px);
+         -webkit-backdrop-filter: blur(12px);
+         align-items: center; justify-content: center;
+         opacity: 0; transition: opacity 0.25s ease;
+       ">
+    <button id="lightbox-close" aria-label="Close"
+            style="
+              position: fixed; top: 22px; right: 28px;
+              background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
+              color: #fff; border-radius: 50%; width: 40px; height: 40px;
+              font-size: 1.4rem; cursor: pointer; display: flex;
+              align-items: center; justify-content: center;
+              transition: background 0.2s;
+            "
+            onmouseover="this.style.background='rgba(43,230,255,0.18)'"
+            onmouseout="this.style.background='rgba(255,255,255,0.08)'">&times;</button>
+    <img id="lightbox-img" src="" alt="Dashboard expanded"
+         style="
+           max-width: 92vw; max-height: 88vh;
+           border-radius: 12px;
+           box-shadow: 0 8px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(43,230,255,0.15);
+           transform: scale(0.92); transition: transform 0.28s cubic-bezier(.34,1.56,.64,1);
+           object-fit: contain;
+         ">
   </div>
 
   <script>
@@ -459,23 +489,58 @@
         authBtn.href = 'dashboard.html';
       }
 
-      // Check if media resources exist, hide placeholders if videos/images successfully load
-      const video = document.querySelector('video');
-      if (video) {
-        video.addEventListener('loadeddata', () => {
-          document.getElementById('demo-media-placeholder').style.display = 'none';
-        });
-        video.addEventListener('error', () => {
-          // Keep placeholder displayed if media fails to load
+      // Check if YouTube iframe loaded; hide placeholder on success, keep it on failure
+      const ytIframe = document.querySelector('.bento-media iframe');
+      const demoPlaceholder = document.getElementById('demo-media-placeholder');
+      if (ytIframe && demoPlaceholder) {
+        ytIframe.addEventListener('load', () => {
+          // YouTube iframes fire load even on errors, so check the src is non-empty
+          if (ytIframe.src && ytIframe.src.includes('youtube.com')) {
+            demoPlaceholder.style.display = 'none';
+          }
         });
       }
       
-      const img = document.querySelector('.span-2-col img');
+      const img = document.getElementById('dashboard-preview-img');
       if (img) {
         img.addEventListener('load', () => {
           document.getElementById('dashboard-media-placeholder').style.display = 'none';
         });
+
+        // Lightbox expand on click
+        img.addEventListener('click', () => {
+          const lb = document.getElementById('img-lightbox');
+          const lbImg = document.getElementById('lightbox-img');
+          lbImg.src = img.src;
+          lb.style.display = 'flex';
+          // Trigger animation next frame
+          requestAnimationFrame(() => {
+            lb.style.opacity = '1';
+            lbImg.style.transform = 'scale(1)';
+          });
+          document.body.style.overflow = 'hidden';
+        });
       }
+
+      // Lightbox close logic
+      function closeLightbox() {
+        const lb = document.getElementById('img-lightbox');
+        const lbImg = document.getElementById('lightbox-img');
+        lb.style.opacity = '0';
+        lbImg.style.transform = 'scale(0.92)';
+        setTimeout(() => {
+          lb.style.display = 'none';
+          document.body.style.overflow = '';
+        }, 260);
+      }
+
+      document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+      document.getElementById('img-lightbox').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeLightbox();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeLightbox();
+      });
     });
   </script>
 </body>

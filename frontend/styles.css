@@ -30,6 +30,11 @@ html, body {
   color: var(--text);
 }
 
+body::-webkit-scrollbar {
+  display: none;
+}
+
+
 body {
   overflow-x: hidden;
 }
@@ -611,6 +616,7 @@ body .background-grid span:nth-child(5) { top: 78%; left: 64%; animation-duratio
   letter-spacing: 0.12em;
   cursor: pointer;
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
 }
 
 .button:hover {
@@ -1098,8 +1104,8 @@ body .background-grid span:nth-child(5) { top: 78%; left: 64%; animation-duratio
   margin: 0 0 15px;
   background: linear-gradient(135deg, #2be6ff 0%, #a3adc5 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 30px rgba(43, 230, 255, 0.15);
 }
 
 /* Dynamic rotating text container */
