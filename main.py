@@ -177,6 +177,7 @@ while True:
         listener.stop()
         cap.release()
         cv2.destroyAllWindows()
+        database.stop_db_write()
     elif key == ord('c'):
         canvas = np.zeros_like(frame)
         boxes = []
