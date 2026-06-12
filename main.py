@@ -58,6 +58,7 @@ def on_click(x, y, button, pressed):
 
 
 def inferrence():
+    m = 0
     global t, client
     folder_path = Path('imageAssets')
     folder_path.mkdir(parents=True, exist_ok=True)
@@ -81,7 +82,7 @@ def inferrence():
             prompt = "Describe what you see in all of the live camera frames and respond according to the JSON schema provided."
             contents = [prompt] + contents
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model=f'{model_array[m]}',
                 contents=contents,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -92,6 +93,9 @@ def inferrence():
             json_res = json.loads(response.text)
             for report in json_res['reports']:
                 logger.log_info(report['name'], report['humans'], report['machines'], report['description'])
+            c += 1
+            if c % 10 == 0:
+                m = (m+1)%len(model_array)
     except Exception as e:
         print(f'ERROR : {e}')
         logger.log_error(f'{e}')
@@ -116,15 +120,20 @@ def activate():
 
 email_id = input("Registered Email-ID: ")
 pwd = input("Password: ")
+camera_index = int(input("Select Camera (0 for primary/webcam, 1 for secondary cam): "))
+
 database.make_connection()
 database.retrieve_table_name(email_id, pwd)
 
 listener = Listener(on_click=on_click)
 listener.start()
 
+c = 0
+model_array = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro', 'gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3-flash' ]
+
 # Target window title (e.g., "Untitled - Notepad" or "Google Chrome")
 TARGET_WINDOW = "Video Feed" 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(camera_index)
 canvas = None
 inferrence_state = False
 client = genai.Client()
