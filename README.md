@@ -64,11 +64,22 @@ Open your terminal in the project directory and run the following command to dow
 pip install -r requirements.txt
 ```
 
-### Step 3: Configure Environment Variables
-Create a `.env` file in the root directory and define the following variables with your Supabase database URL and Gemini API credentials:
-```env
-DATABASE_URL=your_postgresql_database_connection_string
-GEMINI_API_KEY=your_gemini_api_key
+### Step 3: Set Gemini API Key
+Set your Gemini API key as an environment variable so the GenAI SDK can authenticate:
+
+**On Windows (PowerShell):**
+```powershell
+$env:GEMINI_API_KEY="your_actual_api_key_here"
+```
+
+**On Windows (Command Prompt):**
+```cmd
+set GEMINI_API_KEY=your_actual_api_key_here
+```
+
+**On Linux/macOS:**
+```bash
+export GEMINI_API_KEY="your_actual_api_key_here"
 ```
 
 ### Step 4: Run the Surveillance System
