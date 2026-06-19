@@ -82,7 +82,7 @@ def inferrence():
             prompt = "Describe what you see in all of the live camera frames and respond according to the JSON schema provided."
             contents = [prompt] + contents
             response = client.models.generate_content(
-                model=f'{model_array[m]}',
+                model='gemini-2.5-flash',
                 contents=contents,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -93,9 +93,6 @@ def inferrence():
             json_res = json.loads(response.text)
             for report in json_res['reports']:
                 logger.log_info(report['name'], report['humans'], report['machines'], report['description'])
-            c += 1
-            if c % 10 == 0:
-                m = (m+1)%len(model_array)
     except Exception as e:
         print(f'ERROR : {e}')
         logger.log_error(f'{e}')
@@ -123,7 +120,7 @@ pwd = input("Password: ")
 camera_index = int(input("Select Camera (0 for primary/webcam, 1 for secondary cam): "))
 
 database.make_connection()
-database.retrieve_table_name(email_id, pwd)
+database.retrieve_uuid(email_id, pwd)
 
 listener = Listener(on_click=on_click)
 listener.start()

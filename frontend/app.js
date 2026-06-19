@@ -157,14 +157,7 @@ async function fetchLogs() {
   clearStatus();
 
   const token = localStorage.getItem('sb_jwt');
-  const logTable = localStorage.getItem('sb_log_table');
-
-  const tablePill = document.getElementById('active-table-pill');
-  if (tablePill && logTable) {
-    tablePill.textContent = `Table: ${logTable}`;
-  }
-
-  if (!token || !logTable) {
+  if (!token) {
     setStatus('Authentication credentials missing. Redirecting...');
     setTimeout(() => {
       window.location.replace('index.html');
@@ -172,16 +165,66 @@ async function fetchLogs() {
     return;
   }
 
+  let logTable = localStorage.getItem('sb_log_table');
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  if (!logTable || !uuidRegex.test(logTable)) {
+    try {
+      // 1. Get user details from Auth
+      const userResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        method: 'GET',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!userResponse.ok) {
+        throw new Error('Failed to retrieve user auth info.');
+      }
+      const userData = await userResponse.json();
+      const email = userData.email;
+
+      // 2. Fetch the user's log_table from public.users table using their email
+      const profileResponse = await fetch(`${SUPABASE_URL}/rest/v1/users?email_id=eq.${encodeURIComponent(email)}`, {
+        method: 'GET',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!profileResponse.ok) {
+        throw new Error('Failed to fetch user profile.');
+      }
+      const profileData = await profileResponse.json();
+      if (!profileData || profileData.length === 0) {
+        throw new Error('User profile not found.');
+      }
+      logTable = profileData[0].log_table;
+      localStorage.setItem('sb_log_table', logTable);
+    } catch (error) {
+      console.error('Error fetching log table ID:', error);
+      setStatus('Unable to retrieve user log profile identifier.');
+      showLoading(false);
+      return;
+    }
+  }
+
+  const tablePill = document.getElementById('active-table-pill');
+  if (tablePill && logTable) {
+    tablePill.textContent = `Table: ${logTable}`;
+  }
+
   try {
-    const url = new URL(`${SUPABASE_URL}/rest/v1/${logTable}`);
+    const url = new URL(`${SUPABASE_URL}/rest/v1/logs`);
     url.searchParams.set('select', 'time_stamp,name,humans,machines,description');
+    url.searchParams.set('unique_id', 'eq.' + logTable);
     url.searchParams.set('order', 'time_stamp.desc');
     url.searchParams.set('limit', '100');
 
     const response = await fetch(url.toString(), {
       headers: {
         'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
         'Content-Type': 'application/json',
       },
     });
@@ -198,7 +241,7 @@ async function fetchLogs() {
     updateStats(allLogs);
 
     if (!Array.isArray(data) || data.length === 0) {
-      setStatus(`Fetched 0 rows. Confirm your telemetry edge is writing to table: ${logTable}`);
+      setStatus(`Fetched 0 rows. Confirm your telemetry edge is writing to table logs with unique_id: ${logTable}`);
     } else {
       setStatus(`Fetched ${data.length} rows from telemetry.`);
     }

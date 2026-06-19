@@ -17,7 +17,7 @@ def make_connection():
     except Exception as e:
         print(f"ERROR: {e}")
 
-def retrieve_table_name(email_id:str=None, pwd:str=None):
+def retrieve_uuid(email_id:str=None, pwd:str=None):
     if email_id == None and pwd == None:
         print("ERROR: Invalid credentials")
         return
@@ -26,6 +26,7 @@ def retrieve_table_name(email_id:str=None, pwd:str=None):
         cursor.execute(query, (email_id, pwd))
         connection.commit()
         table_log = cursor.fetchone()[0]
+        print(table_log)
         with open('tableName.txt', 'w') as file:
             file.write(table_log)
     except Exception as e:
@@ -56,13 +57,13 @@ def put_data():
             text = arr[3].replace('\'','"')
             json_text = json.loads(text)
             processed_array = [Json(d) for d in json_text]
+
+            with open('tableName.txt', 'r') as table_name:
+                table_id = table_name.readlines()[0].strip()
             
-            # Read dynamic table name from environmental configuration
-            with open('tableName.txt', 'r') as file:
-                log_table = file.readlines()[0].strip()
-            query = sql.SQL('INSERT INTO {} (time_stamp, name, humans, machines, description) VALUES (%s, %s, %s, %s::jsonb[], %s)').format(sql.Identifier(log_table))
+            query = 'INSERT INTO logs (time_stamp, name, humans, machines, description, unique_id) VALUES (%s, %s, %s, %s::jsonb[], %s, %s)'
             try:
-                cursor.execute(query, (arr[0], arr[1], int(arr[2]), processed_array, arr[4]))
+                cursor.execute(query, (arr[0], arr[1], int(arr[2]), processed_array, arr[4], table_id))
                 connection.commit()
             except Exception as e:
                 print(f"ERROR: {e}")
