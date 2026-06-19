@@ -58,7 +58,6 @@ def on_click(x, y, button, pressed):
 
 
 def inferrence():
-    m = 0
     global t, client
     folder_path = Path('imageAssets')
     folder_path.mkdir(parents=True, exist_ok=True)
@@ -119,13 +118,11 @@ email_id = input("Registered Email-ID: ")
 pwd = input("Password: ")
 camera_index = int(input("Select Camera (0 for primary/webcam, 1 for secondary cam): "))
 
-database.make_connection()
 database.retrieve_uuid(email_id, pwd)
 
 listener = Listener(on_click=on_click)
 listener.start()
 
-c = 0
 model_array = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro', 'gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3-flash' ]
 
 # Target window title (e.g., "Untitled - Notepad" or "Google Chrome")
@@ -187,6 +184,7 @@ while True:
     elif key == ord('c'):
         canvas = np.zeros_like(frame)
         boxes = []
+        curr_box = []
     elif key == ord('u'):
         undo()
     elif key == ord('i'):

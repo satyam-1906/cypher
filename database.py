@@ -5,28 +5,21 @@ import os
 import threading
 import json
 from psycopg2.extras import Json
+from supabase import create_client, Client
 
-load_dotenv()
+SUPABASE_URL = "https://rhfmgkhkarbwlqmutrle.supabase.co"
+SUPABASE_KEY = "sb_publishable_4KcrZXeKIIMWHrHxj2_RHg_es2sYhsf"
 
-def make_connection():
-    global cursor, connection
-    DATABASE_URL = os.getenv('DATABASE_URL')
-    try:
-        connection = psycopg2.connect(DATABASE_URL)
-        cursor = connection.cursor()
-    except Exception as e:
-        print(f"ERROR: {e}")
+# Initialize Supabase client for public schema operations
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def retrieve_uuid(email_id:str=None, pwd:str=None):
     if email_id == None and pwd == None:
         print("ERROR: Invalid credentials")
         return
-    query = sql.SQL("SELECT log_table FROM users WHERE email_id = %s AND password = %s")
     try:
-        cursor.execute(query, (email_id, pwd))
-        connection.commit()
-        table_log = cursor.fetchone()[0]
-        print(table_log)
+        response = supabase.table('users').select('log_table').eq('email_id', email_id).eq('password', pwd).execute()
+        table_log = response.data[0]['log_table']
         with open('tableName.txt', 'w') as file:
             file.write(table_log)
     except Exception as e:
@@ -56,15 +49,20 @@ def put_data():
             arr[4] = arr[4][13:]
             text = arr[3].replace('\'','"')
             json_text = json.loads(text)
-            processed_array = [Json(d) for d in json_text]
-
+            processed_array = [json_text]
             with open('tableName.txt', 'r') as table_name:
                 table_id = table_name.readlines()[0].strip()
-            
-            query = 'INSERT INTO logs (time_stamp, name, humans, machines, description, unique_id) VALUES (%s, %s, %s, %s::jsonb[], %s, %s)'
+            query = {
+                "time_stamp": arr[0],
+                "name": arr[1],
+                "humans": int(arr[2]),
+                "machines": processed_array,
+                "description": arr[4],
+                "unique_id": table_id
+            }
             try:
-                cursor.execute(query, (arr[0], arr[1], int(arr[2]), processed_array, arr[4], table_id))
-                connection.commit()
+                response = supabase.table('logs').insert(query).execute()
+                print(response)
             except Exception as e:
                 print(f"ERROR: {e}")
         with open("line.txt", 'w') as line:
@@ -79,5 +77,3 @@ def stop_db_write():
         t.cancel()
     except Exception as e:
         pass
-    cursor.close()
-    connection.close()
