@@ -5,3 +5,5 @@
 line.txt
 .env
 tableName.txt
+*.json
+videoAssets

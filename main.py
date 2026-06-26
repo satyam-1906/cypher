@@ -1,3 +1,5 @@
+from cv2.gapi import infer
+from sqlalchemy import false
 import win32gui
 import win32api
 import time
@@ -15,6 +17,7 @@ import json
 from pathlib import Path
 from PIL import Image
 import database
+import base64
 
 class Machines(BaseModel):
     name: str = Field(description="Name of the machine.")
@@ -29,89 +32,82 @@ class Report(BaseModel):
 class ReportList(BaseModel):
     reports: List[Report]
 
-def undo():
-    global boxes, curr_box, frame, canvas
-    if len(curr_box) == 1:
-        mask = np.zeros(frame.shape[:2], dtype=np.uint8)
-        cv2.circle(mask, (curr_box[0][0], curr_box[0][1]), 2, (256, 256, 256), -1)
-        canvas = cv2.inpaint(canvas, mask, 3, cv2.INPAINT_TELEA)
-        curr_box = []
-    elif len(boxes) >= 1:
-        last_box = boxes[len(boxes)-1]
-        mask = np.zeros(frame.shape[:2], dtype=np.uint8)
-        cv2.circle(mask, (last_box[0][0], last_box[0][1]), 2, (256, 256, 256), -1)
-        cv2.circle(mask, (last_box[1][0], last_box[1][1]), 2, (256, 256, 256), -1)
-        cv2.rectangle(mask, (last_box[0][0], last_box[0][1]), (last_box[1][0], last_box[1][1]), (256, 256, 256), 1)
-        canvas = cv2.inpaint(canvas, mask, 3, cv2.INPAINT_TELEA)
-        boxes.pop()
-
-def on_click(x, y, button, pressed):
-    global curr_box, boxes
-    if not active_state and pressed and button == Button.left:
-        if window_x > 0 and window_x < width and window_y > 0 and window_y < height:
-            cv2.circle(canvas, (window_x, window_y), 2, (256, 256, 256), -1)
-            curr_box.append([window_x, window_y])
-            if len(curr_box) == 2:
-                cv2.rectangle(canvas, (curr_box[0][0], curr_box[0][1]), (curr_box[1][0], curr_box[1][1]), (256, 256, 256), 1)
-                boxes.append(curr_box)
-                curr_box = []
-
-
 def inferrence():
-    global t, client
-    folder_path = Path('imageAssets')
-    folder_path.mkdir(parents=True, exist_ok=True)
-    contents = []
-    if len(boxes) != 0 and active_state:
-        # Remove old saved crops so only the current selection is inferred.
-        for file_path in folder_path.iterdir():
-            if file_path.is_file():
-                file_path.unlink()
-
-        for i in boxes:
-            cropped_frame = frame[i[0][1]:i[1][1], i[0][0]:i[1][0]]
-            cv2.imwrite(folder_path / f'frame_{i[0][0]}_{i[0][1]}.jpg', cropped_frame)
-
-    try:
-        if len(boxes) != 0:
-            for file_path in folder_path.iterdir():
-                if file_path.is_file():
-                    img = Image.open(file_path)
-                    contents.append(img)
-            prompt = "Describe what you see in all of the live camera frames and respond according to the JSON schema provided."
-            contents = [prompt] + contents
+    global client
+    file_path = 'videoAssets/output.mp4'
+    if active_state:
+        try:
+            with open(file_path, 'rb') as video_file:
+                base64_video = base64.b64encode(video_file.read())
+            
+            context_file = Path('context.json')
+            if context_file.exists():
+                with open(context_file, 'r') as file:
+                    context = json.load(file)
+            else:
+                context = []
+            
+            if context:
+                prompt = f"Analyse this context provided at the end of this prompt from previous frames of the surveillance footage and analyze the current surveillance footage and respond according to the JSON schema provided. Context: {context}"
+            else:
+                prompt = "Describe what you see in the live camera footage and respond according to the JSON schema provided."
+            text_part = types.Part.from_text(text=prompt)
+            video_part = types.Part.from_bytes(data=base64.b64decode(base64_video), mime_type='video/mp4')
             response = client.models.generate_content(
                 model='gemini-2.5-flash',
-                contents=contents,
+                contents=[text_part, video_part],
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     response_json_schema=ReportList.model_json_schema(),
                     temperature=0.2
                 )
             )
-            json_res = json.loads(response.text)
-            for report in json_res['reports']:
+            json_res = json.loads(response.text or '')
+            reports = json_res.get('reports', []) if isinstance(json_res, dict) else []
+            print(reports)
+            with open('context.json', 'w') as file:
+                json.dump(reports, file)
+            for report in reports:
                 logger.log_info(report['name'], report['humans'], report['machines'], report['description'])
-    except Exception as e:
-        print(f'ERROR : {e}')
-        logger.log_error(f'{e}')
+        except Exception as e:
+            print(f'ERROR 1: {e}')
+            logger.log_error(f'{e}')
 
-    t = threading.Timer(10.0, inferrence)
-    t.start()
 
 def activate():
     global active_state
     active_state = not active_state
     if active_state:
-        inferrence_timer = threading.Timer(1.0, inferrence)
-        inferrence_timer.start()
         logger.log_activation('Inferrencing ACTIVATED.')
     else:
-        try:
-            t.cancel()
-        except Exception as e:
-            pass
         logger.log_activation('Inferrencing DEACTIVATED')
+
+def toggler():
+    global record_state, toggle_timer
+    if not record_state:
+        create_writer()
+        record_state = True
+        toggle_timer = threading.Timer(5.0, toggler)
+        toggle_timer.start()
+    else:
+        record_state = False
+        time.sleep(1.0)
+        out.release()
+        inferrence()
+        toggle_timer = threading.Timer(7.0, toggler)
+        toggle_timer.start()
+
+
+
+def create_writer():
+    global out
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    if fps == 0:
+        fps = 20
+    fourcc = cv2.VideoWriter.fourcc(*'mp4v')
+    out = cv2.VideoWriter('videoAssets/output.mp4', fourcc, fps, (width, height))
 
 
 email_id = input("Registered Email-ID: ")
@@ -120,27 +116,26 @@ camera_index = int(input("Select Camera (0 for primary/webcam, 1 for secondary c
 
 database.retrieve_uuid(email_id, pwd)
 
-listener = Listener(on_click=on_click)
-listener.start()
+active_state = False
+record_state = False
 
-model_array = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro', 'gemini-3.1-flash-lite', 'gemini-3.5-flash', 'gemini-3-flash' ]
+folder_path = Path('videoAssets')
+folder_path.mkdir(parents=True, exist_ok=True)
 
 # Target window title (e.g., "Untitled - Notepad" or "Google Chrome")
-TARGET_WINDOW = "Video Feed" 
+TARGET_WINDOW = "Video Feed"
 cap = cv2.VideoCapture(camera_index)
 canvas = None
 inferrence_state = False
 client = genai.Client()
 
-boxes = []
-curr_box = []
-
-active_state = False
+start_time = 0
+curr_time = 0
 
 t = threading.Timer(1.0, database.put_data)
 t.start()
 
-while True:
+while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
         print("Can't receive frame (stream end?). Exiting ...")
@@ -149,43 +144,36 @@ while True:
     if canvas is None:
         canvas = np.zeros_like(frame)
 
-    hwnd = win32gui.FindWindow(None, TARGET_WINDOW)
-    window_text = win32gui.GetWindowText(hwnd)
-    if hwnd:
-        screen_x, screen_y = win32api.GetCursorPos()
-        window_x, window_y = win32gui.ScreenToClient(hwnd, (screen_x, screen_y))
-        left, top, right, bottom = win32gui.GetWindowRect(hwnd)
-        width = right - left
-        height = bottom - top
-    else:
-        left, top, right, bottom, screen_x, screen_y, window_x, window_y = 0, 0, 0, 0, 0, 0, 0, 0
-
     if active_state:
         cv2.circle(canvas, (10, 10), 5, (0, 256, 0), -1)
     else:
         cv2.circle(canvas, (10, 10), 5, (0, 0, 256), -1)
     cv2.putText(canvas, "INFERRENCING", (20, 14), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (256, 256, 256), 1)
 
+    if record_state:
+        out.write(frame)
+
     frame = cv2.add(frame, canvas)
 
     cv2.imshow("Video Feed", frame)
         
-    key = cv2.waitKey(1) & 0xFF
+    key = cv2.waitKey(25) & 0xFF
     if key == ord('q'):
         database.stop_db_write()
         try:
+            toggle_timer.cancel()
             t.cancel()
         except Exception as e:
             pass
-        listener.stop()
         cap.release()
         cv2.destroyAllWindows()
         database.stop_db_write()
-    elif key == ord('c'):
-        canvas = np.zeros_like(frame)
-        boxes = []
-        curr_box = []
-    elif key == ord('u'):
-        undo()
+        break
     elif key == ord('i'):
+        try:
+            toggle_timer.cancel()
+        except Exception as e:
+            pass
         activate()
+        toggler()
+        
